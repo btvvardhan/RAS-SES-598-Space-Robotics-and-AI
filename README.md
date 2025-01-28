@@ -1,4 +1,1 @@
-Demo code and assignments for RAS-598 Space Robotics and AI will be posted here. 
-
-Course website: https://deepgis.org/dreamslab/ses598/
-
+Kindly check the readme file in the assignments/first_order_boustrophedon_navigator/README.md for assignent 1.
