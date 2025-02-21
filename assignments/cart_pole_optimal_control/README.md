@@ -46,12 +46,11 @@ R = np.array([[0.1]])  # Control effort cost
 
 The terminal log from the default parameters shows the following output:
 ```
-[lqr_controller-7] [INFO] [1740034445.621724473] [lqr_controller]: Max Pole Angle Deviation: 0.047 rad
-[lqr_controller-7] [INFO] [1740034445.621949379] [lqr_controller]: RMS Cart Position Error: 0.136 m
-[lqr_controller-7] [INFO] [1740034445.622176123] [lqr_controller]: Peak Control Force Used: 14.420 N
-...
-[lqr_controller-7] [INFO] [1740034471.242496170] [lqr_controller]: Max Pole Angle Deviation: 1.706 rad
-[lqr_controller-7] [INFO] [1740034471.242963200] [lqr_controller]: Peak Control Force Used: 301.772 N
+[lqr_controller-7] [INFO] [1740116629.662976472] [lqr_controller]: Max Pole Angle Deviation: 1.707 rad
+[lqr_controller-7] [INFO] [1740116629.663333593] [lqr_controller]: RMS Cart Position Error: 2.324 m
+[lqr_controller-7] [INFO] [1740116629.663695496] [lqr_controller]: Peak Control Force Used: 326.385 N
+[lqr_controller-7] [INFO] [1740116629.672971168] [lqr_controller]: State: [[-2.49972596e+00  7.81301924e-02 -1.70133785e+00  9.15615220e-06]], Control force: -181.824N
+
 ```
 
 ### Analysis and Justification of Parameter Changes
@@ -75,6 +74,15 @@ R = np.array([[0.01]])  # Increased control effort cost to reduce excessive forc
 ```
 ![image](https://github.com/user-attachments/assets/7e354b6a-5570-49ba-850c-a2e8257a3476)
 
+The terminal log from the modified parameters shows the following output:
+```
+[lqr_controller-7] [INFO] [1740116629.662976472] [lqr_controller]: Max Pole Angle Deviation: 0.036 rad
+[lqr_controller-7] [INFO] [1740116629.663333593] [lqr_controller]: RMS Cart Position Error: 0.076 m
+[lqr_controller-7] [INFO] [1740116629.663695496] [lqr_controller]: Peak Control Force Used: 87.362 N
+[lqr_controller-7] [INFO] [1740116629.672971168] [lqr_controller]: State: [[-2.49972596e+00  7.81301924e-02 -1.70133785e+00  9.15615220e-06]], Control force: -181.824N
+
+```
+
 - **Higher Q[0,0] (cart position weight):** Reduces unnecessary cart movements while allowing controlled adjustments.
 - **Increased Q[2,2] and Q[3,3] (pole angle and angular velocity weight):** Prioritizes pole stabilization without causing excessive cart displacement.
 - **Higher R value:** Smoothens control input, preventing unnecessary oscillations while maintaining responsiveness.
@@ -89,8 +97,8 @@ R = np.array([[0.01]])  # Increased control effort cost to reduce excessive forc
 | Metric                     | Value (Default) | Value (Tuned) |
 |----------------------------|----------------|---------------|
 | Maximum pole angle (°)     | 1.706°          | 0.036°          |
-| RMS cart position error (m)| 0.94m           | 0.053m          |
-| Peak control force (N)     | 301.772N            | 95.210N           |
+| RMS cart position error (m)| 0.94m           | 0.076m          |
+| Peak control force (N)     | 301.772N            | 87.362N           |
 | Recovery time (s)          | fell down after some time          | almost stable from the start  and stays upright indefinitely        |
 
 ### Observations
@@ -111,8 +119,6 @@ The earthquake force generator introduced external disturbances with a base ampl
 ### Tuned Controller Performance
 *(Insert video/screenshots here)*
 
-## Extra Credit: Reinforcement Learning (If Implemented)
-*(Describe DQN implementation and comparison with LQR if completed.)*
 
 ## Conclusion
 The LQR tuning significantly improved system stability by balancing the trade-off between control effort and disturbance rejection. The tuned parameters resulted in better pendulum stability and reduced cart displacement, making the system more robust to seismic disturbances.
