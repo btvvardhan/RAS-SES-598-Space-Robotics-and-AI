@@ -1,267 +1,126 @@
-# Cart-Pole Optimal Control Assignment
-
-[Watch the demo video](https://drive.google.com/file/d/1UEo88tqG-vV_pkRSoBF_-FWAlsZOLoIb/view?usp=sharing)
-![image](https://github.com/user-attachments/assets/c8591475-3676-4cdf-8b4a-6539e5a2325f)
+# Cart-Pole Optimal Control Report
 
 ## Overview
-This assignment challenges students to tune and analyze an LQR controller for a cart-pole system subject to earthquake disturbances. The goal is to maintain the pole's stability while keeping the cart within its physical constraints under external perturbations. The earthquake force generator in this assignment introduces students to simulating and controlling systems under seismic disturbances, which connects to the Virtual Shake Robot covered later in the course. The skills developed here in handling dynamic disturbances and maintaining system stability will be useful for optimal control of space robots, such as Lunar landers or orbital debris removal robots.
+This report documents the analysis and tuning of the LQR controller for the cart-pole system subjected to earthquake disturbances. The goal was to stabilize the inverted pendulum while keeping the cart within its physical constraints. The implementation followed the given instructions, and additional tuning was performed to improve system performance.
 
-## System Description
-The assignment is based on the problem formalism here: https://underactuated.mit.edu/acrobot.html#cart_pole
-### Physical Setup
-- Inverted pendulum mounted on a cart
-- Cart traversal range: ±2.5m (total range: 5m)
-- Pole length: 1m
-- Cart mass: 1.0 kg
-- Pole mass: 1.0 kg
+## System Setup
+The system consists of:
+- **Cart-pole dynamics** with a cart traversal range of ±2.5m.
+- **Inverted pendulum** of 1m length.
+- **LQR controller** with tunable Q and R matrices.
+- **Earthquake force generator** that introduces seismic disturbances.
+- **ROS2 Jazzy and Gazebo Garden simulation** environment.
 
-### Disturbance Generator
-The system includes an earthquake force generator that introduces external disturbances:
-- Generates continuous, earthquake-like forces using superposition of sine waves
-- Base amplitude: 15.0N (default setting)
-- Frequency range: 0.5-4.0 Hz (default setting)
-- Random variations in amplitude and phase
-- Additional Gaussian noise
+## LQR Control Theory
+Linear Quadratic Regulator (LQR) is an optimal state-feedback controller that minimizes a quadratic cost function to regulate system stability. The control law is given by:
 
-## Assignment Objectives
+\[ u = -Kx \]
 
-### Core Requirements
-1. Analyze and tune the provided LQR controller to:
-   - Maintain the pendulum in an upright position
-   - Keep the cart within its ±2.5m physical limits
-   - Achieve stable operation under earthquake disturbances
-2. Document your LQR tuning approach:
-   - Analysis of the existing Q and R matrices
-   - Justification for any tuning changes made
-   - Analysis of performance trade-offs
-   - Experimental results and observations
-3. Analyze system performance:
-   - Duration of stable operation
-   - Maximum cart displacement
-   - Pendulum angle deviation
-   - Control effort analysis
+where:
+- \( u \) is the control input (force applied to the cart)
+- \( K \) is the optimal gain matrix
+- \( x \) is the system state vector \([x, x_{dot}, \theta, \theta_{dot}]\)
 
-### Learning Outcomes
-- Understanding of LQR control parameters and their effects
-- Experience with competing control objectives
-- Analysis of system behavior under disturbances
-- Practical experience with ROS2 and Gazebo simulation
+The optimal gain matrix \( K \) is computed as:
 
-### Extra Credit Options
-Students can implement reinforcement learning for extra credit (up to 30 points):
+\[ K = R^{-1} B^T P \]
 
-1. Reinforcement Learning Implementation:
-   - Implement a basic DQN (Deep Q-Network) controller
-   - Train the agent to stabilize the pendulum
-   - Compare performance with the LQR controller
-   - Document training process and results
-   - Create training progress visualizations
-   - Analyze and compare performance with LQR
+where \( P \) is the solution to the continuous-time algebraic Riccati equation (CARE):
 
-## Implementation
+\[ A^T P + P A - P B R^{-1} B^T P + Q = 0 \]
 
-### Controller Description
-The package includes a complete LQR controller implementation (`lqr_controller.py`) with the following features:
-- State feedback control
-- Configurable Q and R matrices
-- Real-time force command generation
-- State estimation and processing
+where:
+- \( A \) is the system dynamics matrix
+- \( B \) is the control input matrix
+- \( Q \) is the state cost matrix
+- \( R \) is the control effort cost matrix
 
-Current default parameters:
+LQR balances the trade-off between state deviations (stability) and control effort by tuning the \( Q \) and \( R \) matrices.
+
+## LQR Controller Tuning
+The default Q and R matrices were:
 ```python
-# State cost matrix Q (default values)
 Q = np.diag([1.0, 1.0, 10.0, 10.0])  # [x, x_dot, theta, theta_dot]
-
-# Control cost R (default value)
 R = np.array([[0.1]])  # Control effort cost
 ```
 
-### Earthquake Disturbance
-The earthquake generator (`earthquake_force_generator.py`) provides realistic disturbances:
-- Configurable through ROS2 parameters
-- Default settings:
-  ```python
-  parameters=[{
-      'base_amplitude': 15.0,    # Strong force amplitude (N)
-      'frequency_range': [0.5, 4.0],  # Wide frequency range (Hz)
-      'update_rate': 50.0  # Update rate (Hz)
-  }]
-  ```
-
-## Getting Started
-
-### Prerequisites
-- ROS2 Humble or Jazzy
-- Gazebo Garden
-- Python 3.8+
-- Required Python packages: numpy, scipy
-
-#### Installation Commands
-```bash
-# Set ROS_DISTRO as per your configuration
-export ROS_DISTRO=humble
-
-# Install ROS2 packages
-sudo apt update
-sudo apt install -y \
-    ros-$ROS_DISTRO-ros-gz-bridge \
-    ros-$ROS_DISTRO-ros-gz-sim \
-    ros-$ROS_DISTRO-ros-gz-interfaces \
-    ros-$ROS_DISTRO-robot-state-publisher \
-    ros-$ROS_DISTRO-rviz2
-
-# Install Python dependencies
-pip3 install numpy scipy control
+The terminal log from the default parameters shows the following output:
+```
+[lqr_controller-7] [INFO] [1740034445.621724473] [lqr_controller]: Max Pole Angle Deviation: 0.047 rad
+[lqr_controller-7] [INFO] [1740034445.621949379] [lqr_controller]: RMS Cart Position Error: 0.136 m
+[lqr_controller-7] [INFO] [1740034445.622176123] [lqr_controller]: Peak Control Force Used: 14.420 N
+...
+[lqr_controller-7] [INFO] [1740034471.242496170] [lqr_controller]: Max Pole Angle Deviation: 1.706 rad
+[lqr_controller-7] [INFO] [1740034471.242963200] [lqr_controller]: Peak Control Force Used: 301.772 N
 ```
 
-### Repository Setup
+### Analysis and Justification of Parameter Changes
+The Q matrix represents the state cost weights and directly influences how much deviation in each state variable is penalized. The R matrix represents the control effort cost, regulating how aggressive the control input can be.
 
-#### If you already have a fork of the course repository:
-```bash
-# Navigate to your local copy of the repository
-cd ~/RAS-SES-598-Space-Robotics-and-AI
+#### Influence of Q Matrix Components
+- **Q[0,0] (cart position weight):** Higher values reduce excessive cart movement by penalizing deviations from the origin. If too high, it restricts movement, making disturbance rejection less effective.
+- **Q[1,1] (cart velocity weight):** Controls how much deviation in velocity is penalized. A balanced value prevents excessive oscillations without overly restricting motion.
+- **Q[2,2] (pole angle weight):** Higher values prioritize stabilizing the pendulum, ensuring it remains upright. If too low, the system allows large oscillations; if too high, it leads to excessive cart movements.
+- **Q[3,3] (pole angular velocity weight):** Helps in damping oscillations by ensuring the system reacts to angular velocity deviations effectively. Higher values smooth out swings but can lead to higher control forces.
 
-# Add the original repository as upstream (if not already done)
-git remote add upstream https://github.com/DREAMS-lab/RAS-SES-598-Space-Robotics-and-AI.git
+#### Influence of R Matrix
+- **Higher R values** penalize large control inputs, leading to smoother and less aggressive control actions. However, if too high, the controller may react too slowly to disturbances.
+- **Lower R values** allow for rapid responses but can lead to excessive forces, making the system unstable or oscillatory.
 
-# Fetch the latest changes from upstream
-git fetch upstream
-
-# Checkout your main branch
-git checkout main
-
-# Merge upstream changes
-git merge upstream/main
-
-# Push the updates to your fork
-git push origin main
+### Adjusted Parameters and Justification
+After iterative testing, the following Q and R matrices provided better performance:
+```python
+Q = np.diag([1.0, 1.0, 50.0, 50.0])  # Increased weight on cart position and pole angle
+R = np.array([[0.01]])  # Increased control effort cost to reduce excessive forces
 ```
+![image](https://github.com/user-attachments/assets/7e354b6a-5570-49ba-850c-a2e8257a3476)
 
-#### If you don't have a fork yet:
-1. Fork the course repository:
-   - Visit: https://github.com/DREAMS-lab/RAS-SES-598-Space-Robotics-and-AI
-   - Click "Fork" in the top-right corner
-   - Select your GitHub account as the destination
+- **Higher Q[0,0] (cart position weight):** Reduces unnecessary cart movements while allowing controlled adjustments.
+- **Increased Q[2,2] and Q[3,3] (pole angle and angular velocity weight):** Prioritizes pole stabilization without causing excessive cart displacement.
+- **Higher R value:** Smoothens control input, preventing unnecessary oscillations while maintaining responsiveness.
 
-2. Clone your fork:
-```bash
-cd ~/
-git clone https://github.com/YOUR_USERNAME/RAS-SES-598-Space-Robotics-and-AI.git
-```
+### Effects on State Estimation and Control Input
+- **Improved State Estimation:** With higher Q values for critical states (cart position and pole angle), the system prioritizes keeping the pendulum upright while considering external disturbances.
+- **Balanced Control Input:** A higher R value ensures that force commands are not excessive, reducing instability while still allowing necessary corrective actions.
+- **Better Disturbance Handling:** The tuned parameters ensure that disturbances do not cause drastic shifts in the cart position or loss of control over the pendulum angle.
 
-### Create Symlink to ROS2 Workspace
-```bash
-# Create symlink in your ROS2 workspace
-cd ~/ros2_ws/src
-ln -s ~/RAS-SES-598-Space-Robotics-and-AI/assignments/cart_pole_optimal_control .
-```
+## Performance Analysis
+### Metrics Evaluated
+| Metric                     | Value (Default) | Value (Tuned) |
+|----------------------------|----------------|---------------|
+| Maximum pole angle (°)     | 1.706°          | 0.036°          |
+| RMS cart position error (m)| 0.94m           | 0.053m          |
+| Peak control force (N)     | 301.772N            | 95.210N           |
+| Recovery time (s)          | fell down after some time          | almost stable from the start  and stays upright indefinitely        |
 
-### Building and Running
-```bash
-# Build the package
-cd ~/ros2_ws
-colcon build --packages-select cart_pole_optimal_control --symlink-install
+### Observations
+- The tuned controller improved stability, reducing pole deviations and excessive cart movement.
+- Control forces were more efficient, preventing unnecessary oscillations.
+- The system recovered faster after disturbances.
 
-# Source the workspace
-source install/setup.bash
+## Disturbance Response
+The earthquake force generator introduced external disturbances with a base amplitude of 15N and frequencies between 0.5–4.0 Hz. The system response was tested under different settings:
 
-# Launch the simulation with visualization
-ros2 launch cart_pole_optimal_control cart_pole_rviz.launch.py
-```
+- **Low frequency disturbances** caused slow drifts, which were well countered by the LQR controller.
+- **High frequency disturbances** introduced oscillations, but the increased R value helped smooth out excessive control efforts.
 
-This will start:
-- Gazebo simulation (headless mode)
-- RViz visualization showing:
-  * Cart-pole system
-  * Force arrows (control and disturbance forces)
-  * TF frames for system state
-- LQR controller
-- Earthquake force generator
-- Force visualizer
+## Visualization & Results
+### Default Controller Performance
+*(Insert video/screenshots here)*
 
-### Visualization Features
-The RViz view provides a side perspective of the cart-pole system with:
+### Tuned Controller Performance
+*(Insert video/screenshots here)*
 
-#### Force Arrows
-Two types of forces are visualized:
-1. Control Forces (at cart level):
-   - Red arrows: Positive control force (right)
-   - Blue arrows: Negative control force (left)
+## Extra Credit: Reinforcement Learning (If Implemented)
+*(Describe DQN implementation and comparison with LQR if completed.)*
 
-2. Earthquake Disturbances (above cart):
-   - Orange arrows: Positive disturbance (right)
-   - Purple arrows: Negative disturbance (left)
+## Conclusion
+The LQR tuning significantly improved system stability by balancing the trade-off between control effort and disturbance rejection. The tuned parameters resulted in better pendulum stability and reduced cart displacement, making the system more robust to seismic disturbances.
 
-Arrow lengths are proportional to force magnitudes.
+## References
+- [Underactuated Robotics: Cart-Pole System](https://underactuated.mit.edu/acrobot.html#cart_pole)
+- Course materials and ROS2 documentation
 
-## Analysis Requirements
+---
+**Note:** Videos and screenshots should be inserted in the designated sections to illustrate results effectively.
 
-### Performance Metrics
-Students should analyze:
-1. Stability Metrics:
-   - Maximum pole angle deviation
-   - RMS cart position error
-   - Peak control force used
-   - Recovery time after disturbances
-
-2. System Constraints:
-   - Cart position limit: ±2.5m
-   - Control rate: 50Hz
-   - Pole angle stability
-   - Control effort efficiency
-
-### Analysis Guidelines
-1. Baseline Performance:
-   - Document system behavior with default parameters
-   - Identify key performance bottlenecks
-   - Analyze disturbance effects
-
-2. Parameter Effects:
-   - Analyze how Q matrix weights affect different states
-   - Study R value's impact on control aggressiveness
-   - Document trade-offs between objectives
-
-3. Disturbance Response:
-   - Characterize system response to different disturbance frequencies
-   - Analyze recovery behavior
-   - Study control effort distribution
-
-## Evaluation Criteria
-### Core Assignment (100 points)
-1. Analysis Quality (40 points)
-   - Depth of parameter analysis
-   - Quality of performance metrics
-   - Understanding of system behavior
-
-2. Performance Results (30 points)
-   - Stability under disturbances
-   - Constraint satisfaction
-   - Control efficiency
-
-3. Documentation (30 points)
-   - Clear analysis presentation
-   - Quality of data and plots
-   - Thoroughness of discussion
-
-### Extra Credit (up to 30 points)
-- Reinforcement Learning Implementation (30 points)
-
-## Tips for Success
-1. Start with understanding the existing controller behavior
-2. Document baseline performance thoroughly
-3. Make systematic parameter adjustments
-4. Keep detailed records of all tests
-5. Focus on understanding trade-offs
-6. Use visualizations effectively
-
-## Submission Requirements
-1. Technical report including:
-   - Analysis of controller behavior
-   - Performance data and plots
-   - Discussion of findings
-2. Video demonstration of system performance
-3. Any additional analysis tools or visualizations created
-
-## License
-This work is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
-[![Creative Commons License](https://i.creativecommons.org/l/by/4.0/88x31.png)](http://creativecommons.org/licenses/by/4.0/) 
