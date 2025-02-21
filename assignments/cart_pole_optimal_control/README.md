@@ -43,7 +43,7 @@ The default Q and R matrices were:
 Q = np.diag([1.0, 1.0, 10.0, 10.0])  # [x, x_dot, theta, theta_dot]
 R = np.array([[0.1]])  # Control effort cost
 ```
-
+Note: i modified the LQR controller.py code in order to display the performance metrics along with states and control force
 The terminal log from the default parameters shows the following output:
 ```
 [lqr_controller-7] [INFO] [1740116629.662976472] [lqr_controller]: Max Pole Angle Deviation: 1.707 rad
