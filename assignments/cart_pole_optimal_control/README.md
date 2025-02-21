@@ -70,7 +70,7 @@ The Q matrix represents the state cost weights and directly influences how much 
 After iterative testing, the following Q and R matrices provided better performance:
 ```python
 Q = np.diag([1.0, 1.0, 50.0, 50.0])  # Increased weight on cart position and pole angle
-R = np.array([[0.01]])  # Increased control effort cost to reduce excessive forces
+R = np.array([[0.2]])  # Increased control effort cost to reduce excessive forces
 ```
 ![image](https://github.com/user-attachments/assets/7e354b6a-5570-49ba-850c-a2e8257a3476)
 
@@ -113,20 +113,9 @@ The earthquake force generator introduced external disturbances with a base ampl
 - **High frequency disturbances** introduced oscillations, but the increased R value helped smooth out excessive control efforts.
 
 ## Visualization & Results
-### Default Controller Performance
-*(Insert video/screenshots here)*
 
-### Tuned Controller Performance
-*(Insert video/screenshots here)*
-
+[*(Here is the video of my cart pole in motion)*
+](https://drive.google.com/file/d/1-Cr1nsxpzbHP_fMHXokqlgrB2LEEA7xo/view?usp=sharing)
 
 ## Conclusion
 The LQR tuning significantly improved system stability by balancing the trade-off between control effort and disturbance rejection. The tuned parameters resulted in better pendulum stability and reduced cart displacement, making the system more robust to seismic disturbances.
-
-## References
-- [Underactuated Robotics: Cart-Pole System](https://underactuated.mit.edu/acrobot.html#cart_pole)
-- Course materials and ROS2 documentation
-
----
-**Note:** Videos and screenshots should be inserted in the designated sections to illustrate results effectively.
-
