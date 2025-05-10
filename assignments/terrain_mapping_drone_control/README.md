@@ -16,7 +16,7 @@ The project is composed of **three custom ROS 2 nodes**, enabling full autonomy 
 
 | Node Name                | Functionality                                                                                   |
 | ------------------------ | ----------------------------------------------------------------------------------------------- |
-| `takeoff_and_hover.py`   | Arms the drone, sets OFFBOARD mode, performs a controlled ascent, and maintains hover           |
+| `takeoff.py`   | Arms the drone, sets OFFBOARD mode, performs a controlled ascent, and maintains hover           |
 | `aruco_landing.py`       | Locates and centers over an ArUco marker using onboard vision, then initiates automated landing |
 | `dimension_estimator.py` | Measures the distance to the marker using pinhole camera math and known dimensions              |
 ---
@@ -59,7 +59,7 @@ $$
 
 ## 🧩 Node Summaries
 
-### `takeoff_and_hover.py`
+### `takeoff.py`
 
 * Automatically arms the drone
 * Switches to OFFBOARD mode
@@ -110,7 +110,7 @@ MicroXRCEAgent udp4 -p 8888
 ### 3️⃣ Execute Takeoff Node
 
 ```bash
-ros2 run terrain_mapping_drone_control takeoff_and_hover.py
+ros2 run terrain_mapping_drone_control takeoff.py
 ```
 
 * Arms the drone
