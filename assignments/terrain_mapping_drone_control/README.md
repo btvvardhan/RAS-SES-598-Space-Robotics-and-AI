@@ -1,129 +1,155 @@
-# Assignment 3: Rocky Times Challenge - Search, Map, & Analyze
 
-This ROS2 package implements an autonomous drone system for geological feature detection, mapping, and analysis using an RGBD camera and PX4 SITL simulation.
+# 🛰️ Assignment 3: Rocky Times Challenge — Autonomous Drone Mission with ROS 2 & PX4
 
-## Challenge Overview
+This ROS 2 package demonstrates an autonomous drone workflow in a simulated Gazebo environment using PX4 SITL.
+The mission includes:
 
-Students will develop a controller for a PX4-powered drone to efficiently search, map, and analyze cylindrical rock formations in an unknown environment. The drone must identify two rock formations (10m and 7m tall cylinders), estimate their dimensions, and successfully land on top of the taller cylinder.
+* Smooth vertical takeoff and hover
+* Real-time ArUco marker detection
+* Vision-guided autonomous landing
 
-### Mission Objectives
-1. Search and locate all cylindrical rock formations
-2. Map and analyze rock dimensions:
-   - Estimate height and diameter of each cylinder
-   - Determine positions in the world frame
-3. Land safely on top of the taller cylinder
-4. Complete mission while logging time and energy performance. 
+---
 
-![Screenshot from 2025-03-04 20-22-35](https://github.com/user-attachments/assets/3548b6da-613a-401d-bf38-e9e3ac4a2a2b)
+## 🚀 ROS 2 Nodes Overview
 
-### Evaluation Criteria (100 points)
+The project is composed of **three custom ROS 2 nodes**, enabling full autonomy for the drone operation:
 
-The assignment will be evaluated based on:
-- Total time taken to complete the mission
-- Total energy units consumed during operation
-- Accuracy of cylinder dimension estimates
-- Landing precision on the taller cylinder
-- Performance across multiple trials (10 known + 5 unknown scenes)
+| Node Name                | Functionality                                                                                   |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
+| `takeoff_and_hover.py`   | Arms the drone, sets OFFBOARD mode, performs a controlled ascent, and maintains hover           |
+| `aruco_landing.py`       | Locates and centers over an ArUco marker using onboard vision, then initiates automated landing |
+| `dimension_estimator.py` | Measures the distance to the marker using pinhole camera math and known dimensions              |
+---
 
-### Key Requirements
+---
 
-- Autonomous takeoff and search strategy implementation
-- Real-time cylinder detection and dimension estimation
-- Energy-conscious path planning
-- Safe and precise landing on the target cylinder
-- Robust performance across different scenarios
+## 📐 Marker Distance Estimation — `dimension_estimator.py`
 
-## Prerequisites
+This node uses the camera feed and OpenCV ArUco detection to compute the distance to a visible marker.
 
-- ROS2 Humble
-- PX4 SITL Simulator (Tested with PX4-Autopilot main branch 9ac03f03eb)
-- RTAB-Map ROS2 package
-- OpenCV
-- Python 3.8+
+### Methodology:
 
-## Repository Setup
+* Subscribes to `/rgb_camera`
+* Detects ArUco markers in image frames
+* Computes the pixel width of the marker
+* Applies the pinhole model to estimate distance
 
-### If you already have a fork of the course repository:
+---
 
-```bash
-# Navigate to your local copy of the repository
-cd ~/RAS-SES-598-Space-Robotics-and-AI
+### 🔧 Parameters Used:
 
-# Add the original repository as upstream (if not already done)
-git remote add upstream https://github.com/DREAMS-lab/RAS-SES-598-Space-Robotics-and-AI.git
+| Parameter          | Value          | Description                            |
+| ------------------ | -------------- | -------------------------------------- |
+| `marker_real_size` | `0.2` meters   | Physical width of the ArUco marker     |
+| `fx`               | `554.0` pixels | Assumed focal length of the RGB camera |
 
-# Fetch the latest changes from upstream
-git fetch upstream
+### 📏 Distance Formula:
 
-# Checkout your main branch
-git checkout main
+$$
+\text{Distance} = \frac{f_x \times \text{Marker Size (m)}}{\text{Marker Width (pixels)}}
+$$
 
-# Merge upstream changes
-git merge upstream/main
+---
 
-# Push the updates to your fork
-git push origin main
-```
+### 📤 Output:
 
-### If you don't have a fork yet:
+![Distance Output](https://github.com/user-attachments/assets/64792be6-cef8-49f2-86e2-868df13e5567)
 
-1. Fork the course repository:
-   - Visit: https://github.com/DREAMS-lab/RAS-SES-598-Space-Robotics-and-AI
-   - Click "Fork" in the top-right corner
-   - Select your GitHub account as the destination
+---
 
-2. Clone your fork:
-```bash
-cd ~/
-git clone https://github.com/YOUR_USERNAME/RAS-SES-598-Space-Robotics-and-AI.git
-```
+## 🧩 Node Summaries
 
-### Create Symlink to ROS2 Workspace
+### `takeoff_and_hover.py`
 
-```bash
-# Create symlink in your ROS2 workspace
-cd ~/ros2_ws/src
-ln -s ~/RAS-SES-598-Space-Robotics-and-AI/assignments/terrain_mapping_drone_control .
-```
+* Automatically arms the drone
+* Switches to OFFBOARD mode
+* Ascends smoothly to 15 meters
+* Hovers at target altitude
+* Publishes to `/fmu/in/trajectory_setpoint`
 
-### Copy PX4 Model Files
+---
 
-Copy the custom PX4 model files to the PX4-Autopilot folder
+### `aruco_landing.py`
 
-```bash
-# Navigate to the package
-cd ~/ros2_ws/src/terrain_mapping_drone_control
+* Subscribes to `/rgb_camera` for visual input
+* Detects ArUco marker in real time
+* Aligns the drone using `/cmd_vel` based on pixel offsets
+* Triggers landing when the drone is centered above the marker
 
-# Make the setup script executable
-chmod +x scripts/deploy_px4_model.sh
+---
 
-# Run the setup script to copy model files
-./scripts/deploy_px4_model.sh -p /path/to/PX4-Autopilot
-```
+### `dimension_estimator.py`
 
-## Building and Running
+* Uses marker size in the image to compute distance
+* Assists in validating object sizes or altitude accuracy
+* Relies on basic camera calibration parameters
+
+---
+
+## 🔧 Launch Procedure
+
+### 1️⃣ Launch Simulation in Gazebo
 
 ```bash
-# Build the package
-cd ~/ros2_ws
-colcon build --packages-select terrain_mapping_drone_control --symlink-install
-
-# Source the workspace
-source install/setup.bash
-
-# Launch the simulation with visualization with your PX4-Autopilot path
 ros2 launch terrain_mapping_drone_control cylinder_landing.launch.py
-
-# OR you can change the default path in the launch file
-        DeclareLaunchArgument(
-            'px4_autopilot_path',
-            default_value=os.environ.get('HOME', '/home/' + os.environ.get('USER', 'user')) + '/PX4-Autopilot',
-            description='Path to PX4-Autopilot directory'),
 ```
-## Extra credit -- 3D reconstruction (50 points)
-Use RTAB-Map or a SLAM ecosystem of your choice to map both rocks, and export the world as a mesh file, and upload to your repo. Use git large file system (LFS) if needed. 
 
-## License
+* Launches simulation
+* Spawns drone and cylinder with ArUco marker
 
-This assignment is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0). 
-For more details: https://creativecommons.org/licenses/by-nc-sa/4.0/ 
+---
+
+### 2️⃣ Start PX4 Communication Agent
+
+```bash
+MicroXRCEAgent udp4 -p 8888
+```
+
+---
+
+### 3️⃣ Execute Takeoff Node
+
+```bash
+ros2 run terrain_mapping_drone_control takeoff_and_hover.py
+```
+
+* Arms the drone
+* Switches to OFFBOARD
+* Takes off to 15m and hovers
+
+---
+
+### 4️⃣ Run ArUco Landing Node
+
+```bash
+ros2 run terrain_mapping_drone_control aruco_landing.py
+```
+
+* Initiates ArUco detection and aligns the drone
+* Executes landing when aligned
+
+---
+
+### 5️⃣ Run Distance Estimator
+
+```bash
+ros2 run terrain_mapping_drone_control dimension_estimator.py
+```
+
+---
+
+> ⚠️ Ensure the drone is airborne and ArUco marker is visible before launching this node.
+
+---
+
+## 📡 rqt\_graph
+
+![rqt\_graph](https://github.com/user-attachments/assets/7291d843-08b6-40c3-aa6d-262bb79058e5)
+
+---
+
+## ✅ Final Result
+
+![Final Result](https://github.com/user-attachments/assets/baf82ba8-ec47-4e64-b993-63ecf235087a)
+
+---
