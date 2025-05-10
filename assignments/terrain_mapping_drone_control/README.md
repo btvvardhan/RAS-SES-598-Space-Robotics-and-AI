@@ -53,7 +53,7 @@ $$
 
 ### 📤 Output:
 
-![Distance Output](https://github.com/user-attachments/assets/64792be6-cef8-49f2-86e2-868df13e5567)
+<img width="1200" alt="Screenshot 2025-05-09 at 11 48 39 PM" src="https://github.com/user-attachments/assets/ccf7a232-30a2-4401-9e73-92f4a41bdb56" />
 
 ---
 
